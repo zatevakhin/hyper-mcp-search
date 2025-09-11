@@ -43,33 +43,31 @@ fn search(input: CallToolRequest) -> Result<CallToolResult, Error> {
     let config = SearXNGConfig::default();
     let client = SearXNGClient::new(config);
     match client.test_connection() {
-        Ok(true) => {
-            match client.simple_search(query) {
-                Ok(response) => Ok(CallToolResult {
-                    is_error: None,
-                    content: vec![Content {
-                        annotations: None,
-                        text: Some(
-                            serde_json::to_string(&response)
-                                .unwrap_or_else(|_| "Serialization error".into()),
-                        ),
-                        mime_type: Some("application/json".into()),
-                        r#type: ContentType::Text,
-                        data: None,
-                    }],
-                }),
-                Err(e) => Ok(CallToolResult {
-                    is_error: Some(true),
-                    content: vec![Content {
-                        annotations: None,
-                        text: Some(format!("Search failed: {}", e)),
-                        mime_type: None,
-                        r#type: ContentType::Text,
-                        data: None,
-                    }],
-                }),
-            }
-        }
+        Ok(true) => match client.simple_search(query) {
+            Ok(response) => Ok(CallToolResult {
+                is_error: None,
+                content: vec![Content {
+                    annotations: None,
+                    text: Some(
+                        serde_json::to_string(&response)
+                            .unwrap_or_else(|_| "Serialization error".into()),
+                    ),
+                    mime_type: Some("application/json".into()),
+                    r#type: ContentType::Text,
+                    data: None,
+                }],
+            }),
+            Err(e) => Ok(CallToolResult {
+                is_error: Some(true),
+                content: vec![Content {
+                    annotations: None,
+                    text: Some(format!("Search failed: {}", e)),
+                    mime_type: None,
+                    r#type: ContentType::Text,
+                    data: None,
+                }],
+            }),
+        },
         Ok(false) => Ok(CallToolResult {
             is_error: Some(true),
             content: vec![Content {
@@ -80,18 +78,16 @@ fn search(input: CallToolRequest) -> Result<CallToolResult, Error> {
                 data: None,
             }],
         }),
-        Err(e) => {
-            Ok(CallToolResult {
-                is_error: Some(true),
-                content: vec![Content {
-                    annotations: None,
-                    text: Some(format!("Connection test failed: {}", e)),
-                    mime_type: None,
-                    r#type: ContentType::Text,
-                    data: None,
-                }],
-            })
-        }
+        Err(e) => Ok(CallToolResult {
+            is_error: Some(true),
+            content: vec![Content {
+                annotations: None,
+                text: Some(format!("Connection test failed: {}", e)),
+                mime_type: None,
+                r#type: ContentType::Text,
+                data: None,
+            }],
+        }),
     }
 }
 
@@ -101,7 +97,11 @@ pub(crate) fn describe() -> Result<ListToolsResult, Error> {
     let client = SearXNGClient::new(config);
     match client.get_engines(crate::searxng::EngineFilter::Enabled) {
         Ok(engines) => {
-            let engine_list = engines.keys().map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
+            let engine_list = engines
+                .keys()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
             info!("Available SearXNG engines: {}", engine_list);
         }
         Err(e) => {

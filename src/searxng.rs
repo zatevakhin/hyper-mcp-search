@@ -56,14 +56,14 @@ impl Default for SearXNGConfig {
         let default_categories_env = config::get("SEARXNG_DEFAULT_CATEGORIES")
             .ok()
             .flatten()
-            .unwrap_or_else(|| "".to_string());
+            .unwrap_or_default();
         let default_categories = parse_comma_separated_from_string(&default_categories_env);
 
         // Direct empty string handling for engines
         let default_engines_env = config::get("SEARXNG_DEFAULT_ENGINES")
             .ok()
             .flatten()
-            .unwrap_or_else(|| "".to_string());
+            .unwrap_or_default();
         let default_engines = parse_comma_separated_from_string(&default_engines_env);
 
         let language = config::get("SEARXNG_DEFAULT_LANGUAGE")
@@ -214,15 +214,14 @@ impl SearXNGClient {
             .map_err(|e| anyhow!("HTTP request failed: {}", e))?;
 
         // BUG: extism_pdk sometimes returns status 0 even for successful requests
-        let is_success = (200..300).contains(&response.status()) ||
-                         (response.status() == 0 && !response.body().is_empty());
+        let is_success = (200..300).contains(&response.status())
+            || (response.status() == 0 && !response.body().is_empty());
 
         if !is_success {
             let body = String::from_utf8(response.body().to_vec())
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(anyhow!("HTTP Error: {} - {}", response.status(), body));
         }
-
 
         let search_response: SearXNGResponse = serde_json::from_slice(&response.body())
             .map_err(|e| anyhow!("Failed to parse response: {}", e))?;
@@ -250,19 +249,33 @@ impl SearXNGClient {
         let mut response = self.search(params)?;
 
         // Sort results by score (highest first)
-        response.results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        response.results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Truncate results to configured limit
         if response.results.len() > self.config.num_results as usize {
             let original_count = response.results.len();
             response.results.truncate(self.config.num_results as usize);
             response.number_of_results = response.results.len() as u32;
-            info!("Results truncated from {} to {} (limit: {})", original_count, response.results.len(), self.config.num_results);
+            info!(
+                "Results truncated from {} to {} (limit: {})",
+                original_count,
+                response.results.len(),
+                self.config.num_results
+            );
         }
 
         // Log the result titles and scores for debugging
         for (i, result) in response.results.iter().enumerate() {
-            info!("Result {}: {} (score: {:.3})", i + 1, result.title, result.score);
+            info!(
+                "Result {}: {} (score: {:.3})",
+                i + 1,
+                result.title,
+                result.score
+            );
         }
 
         Ok(response)
@@ -279,8 +292,8 @@ impl SearXNGClient {
             .map_err(|e| anyhow!("Connection test failed: {}", e))?;
 
         // BUG: extism_pdk sometimes returns status 0 even for successful requests
-        let is_success = (200..300).contains(&response.status()) ||
-                         (response.status() == 0 && !response.body().is_empty());
+        let is_success = (200..300).contains(&response.status())
+            || (response.status() == 0 && !response.body().is_empty());
 
         Ok(is_success)
     }
@@ -296,8 +309,8 @@ impl SearXNGClient {
             .map_err(|e| anyhow!("Failed to get engines: {}", e))?;
 
         // BUG: extism_pdk sometimes returns status 0 even for successful requests
-        let is_success = (200..300).contains(&response.status()) ||
-                        (response.status() == 0 && !response.body().is_empty());
+        let is_success = (200..300).contains(&response.status())
+            || (response.status() == 0 && !response.body().is_empty());
 
         if !is_success {
             return Err(anyhow!("Unable to get search engines"));
@@ -311,10 +324,12 @@ impl SearXNGClient {
                 if let Some(name) = engine.get("name").and_then(|n| n.as_str()) {
                     let include = match filter {
                         EngineFilter::All => true,
-                        EngineFilter::Enabled => engine.get("enabled")
+                        EngineFilter::Enabled => engine
+                            .get("enabled")
                             .and_then(|v| v.as_bool())
                             .unwrap_or(false),
-                        EngineFilter::Disabled => !engine.get("enabled")
+                        EngineFilter::Disabled => !engine
+                            .get("enabled")
                             .and_then(|v| v.as_bool())
                             .unwrap_or(true),
                     };
