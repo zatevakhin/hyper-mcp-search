@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install WASM target
+        run: rustup target add wasm32-wasip1
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+        with:
+          workspaces: "."
+
+      - name: Run clippy
+        run: cargo clippy -- # -D warnings
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run tests
+        run: cargo test --workspace --all-features
+
+      - name: Build hyper-mcp-search
+        run: cargo build --release --target wasm32-wasip1
+
