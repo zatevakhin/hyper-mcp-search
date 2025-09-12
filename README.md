@@ -5,6 +5,7 @@ A WebAssembly plugin for [hyper-mcp](https://github.com/tuananh/hyper-mcp) that 
 ## Features
 
 - 🔍 **Privacy-focused search** using SearXNG metasearch engine
+- 🕸️ **Web browsing** with HTML to Markdown conversion
 - ⚙️ **Highly configurable** - engines, categories, safe search, result limits
 - 🛡️ **Secure execution** - runs in WebAssembly sandbox
 - 📊 **Structured results** - JSON output with titles, URLs, content, and scores
