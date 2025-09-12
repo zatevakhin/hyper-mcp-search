@@ -1,6 +1,8 @@
+mod browse;
 mod pdk;
 mod searxng;
 
+use crate::browse::browse;
 use crate::searxng::{SearXNGClient, SearXNGConfig};
 use extism_pdk::*;
 use pdk::types::*;
@@ -9,6 +11,7 @@ use serde_json::{Value, json};
 pub(crate) fn call(input: CallToolRequest) -> Result<CallToolResult, Error> {
     match input.params.name.as_str() {
         "search" => search(input),
+        "browse" => browse_tool(input),
         _ => Ok(CallToolResult {
             is_error: Some(true),
             content: vec![Content {
@@ -91,6 +94,48 @@ fn search(input: CallToolRequest) -> Result<CallToolResult, Error> {
     }
 }
 
+fn browse_tool(input: CallToolRequest) -> Result<CallToolResult, Error> {
+    let args = input.params.arguments.unwrap_or_default();
+    let url = match args.get("url") {
+        Some(Value::String(u)) if !u.is_empty() => u,
+        _ => {
+            return Ok(CallToolResult {
+                is_error: Some(true),
+                content: vec![Content {
+                    annotations: None,
+                    text: Some("Please provide a non-empty url string".into()),
+                    mime_type: None,
+                    r#type: ContentType::Text,
+                    data: None,
+                }],
+            });
+        }
+    };
+
+    match browse(url) {
+        Ok(html) => Ok(CallToolResult {
+            is_error: None,
+            content: vec![Content {
+                annotations: None,
+                text: Some(html),
+                mime_type: Some("text/markdown".into()),
+                r#type: ContentType::Text,
+                data: None,
+            }],
+        }),
+        Err(e) => Ok(CallToolResult {
+            is_error: Some(true),
+            content: vec![Content {
+                annotations: None,
+                text: Some(format!("Browse failed: {}", e)),
+                mime_type: None,
+                r#type: ContentType::Text,
+                data: None,
+            }],
+        }),
+    }
+}
+
 pub(crate) fn describe() -> Result<ListToolsResult, Error> {
     // Log available engines on plugin load
     let config = SearXNGConfig::default();
@@ -110,22 +155,41 @@ pub(crate) fn describe() -> Result<ListToolsResult, Error> {
     }
 
     Ok(ListToolsResult {
-        tools: vec![ToolDescription {
-            name: "search".into(),
-            description: "Perform web search using SearXNG".into(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The search query",
+        tools: vec![
+            ToolDescription {
+                name: "search".into(),
+                description: "Perform web search using SearXNG".into(),
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query",
+                        },
                     },
-                },
-                "required": ["query"],
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        }],
+                    "required": ["query"],
+                })
+                .as_object()
+                .unwrap()
+                .clone(),
+            },
+            ToolDescription {
+                name: "browse".into(),
+                description: "Fetch content from a URL as Markdown".into(),
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The URL to browse",
+                        },
+                    },
+                    "required": ["url"],
+                })
+                .as_object()
+                .unwrap()
+                .clone(),
+            },
+        ],
     })
 }

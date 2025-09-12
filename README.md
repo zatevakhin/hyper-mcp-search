@@ -9,6 +9,11 @@ A WebAssembly plugin for [hyper-mcp](https://github.com/tuananh/hyper-mcp) that 
 - 🛡️ **Secure execution** - runs in WebAssembly sandbox
 - 📊 **Structured results** - JSON output with titles, URLs, content, and scores
 
+## Tools
+
+- **search**: Perform web search using SearXNG
+- **browse**: Fetch content from a URL as Markdown
+
 ## Installation
 
 ### Prerequisites
@@ -86,6 +91,8 @@ Most MCP-compatible tools support the `stdio`, `see` or `streamable-http` transp
 | `SEARXNG_SAFE_SEARCH` | `"0"` | Safe search level (0=none, 1=moderate, 2=strict) |
 | `SEARXNG_NUM_RESULTS` | `"5"` | Maximum number of results to return |
 | `SEARXNG_USER_AGENT` | `"searxng-rs/{version}"` | HTTP user agent string |
+| `BROWSE_FOLLOW_REDIRECTS` | `"false"` | Whether to follow HTTP redirects when browsing |
+| `BROWSE_MAX_REDIRECTS` | `"10"` | Maximum number of redirects to follow when browsing |
 
 
 ## Development
