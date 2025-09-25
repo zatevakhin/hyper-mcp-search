@@ -46,6 +46,10 @@ A WebAssembly plugin for [hyper-mcp](https://github.com/tuananh/hyper-mcp) that 
            SEARXNG_NUM_RESULTS: "10"
    ```
 
+### Docker Setup
+
+For easy deployment, use the provided [`docker-compose.yml`](docker-compose.yml) and example [`config.yml`](config.yml) files.
+
 ## Usage
 
 ### With AI Agents

@@ -1,0 +1,9 @@
+plugins:
+  search:
+    url: oci://ghcr.io/zatevakhin/hyper-mcp-search-plugin:v0.1.1
+    runtime_config:
+      allowed_hosts:
+        - "*"
+      env_vars:
+        SEARXNG_BASE_URL: http://searxng:8080
+        SEARXNG_NUM_RESULTS: "10"
