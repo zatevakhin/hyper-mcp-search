@@ -1,6 +1,6 @@
 [package]
 name = "hyper-mcp-search"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [lib]
@@ -16,3 +16,4 @@ base64-serde = "0.8.0"
 anyhow = "1.0"
 url = "2.0"
 html2md = "0.2"
+regex = "1.0"
